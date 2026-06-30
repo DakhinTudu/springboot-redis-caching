@@ -1,6 +1,6 @@
 # Spring Boot Redis Caching Demo
 
-A modern, high-performance reference application built with **Spring Boot**, **Spring Cache**, **Redis**, and **Spring Data JPA** demonstrating best practices for distributed caching, pagination, and standardized client responses.
+A modern, high-performance reference application built with **Spring Boot**, **Spring Cache**, **Redis**, **Spring Data JPA**, and **MapStruct**, demonstrating best practices for distributed caching, automatic auditing, robust validation, custom exception handling, and standardized client responses.
 
 ---
 
@@ -8,7 +8,11 @@ A modern, high-performance reference application built with **Spring Boot**, **S
 
 * **Distributed Caching with Redis**: Full integration of Spring's cache abstraction (`@Cacheable`, `@CacheEvict`, `@Caching`) using Redis as the cache provider.
 * **Custom JSON Serialization**: Configures Redis templates to serialize/deserialize payload data structured in standard Jackson-based JSON instead of default Java serialization binary formats for transparency and cross-system compatibility.
-* **In-Memory H2 Database**: Pre-configured with H2 database for zero-overhead local development, featuring active query logging (`spring.jpa.show-sql=true`).
+* **MapStruct DTO Mapping**: Type-safe, high-performance compilation-time object mapping between database Entities (`Books`) and API DTO Records (`BookRequest`, `BookResponse`, `BookUpdateRequest`).
+* **Lombok & MapStruct Integration**: Seamless configuration handling constructor-based mapper injection and class-level unmapped target checks.
+* **Robust Request Validation**: Active annotation-based request validation (`@Valid` validation rules) verifying client inputs on book creation and updates.
+* **JPA Entity Auditing**: Extends a reusable `Auditable` superclass mapping `createdAt`, `createdBy`, `updatedAt`, and `updatedBy` properties automatically via JPA Entity Listeners.
+* **Custom Exception Handling**: Clean exception architecture featuring `BookNotFoundException` returning precise API messages.
 * **Systematic Cache Invalidation (Eviction Patterns)**:
   * When a book is created, the paginated lists (`page-books`) cache is fully invalidated.
   * When a book is updated or deleted, both its individual cache (`books::bookId`) and the list queries (`page-books`) caches are evicted automatically to prevent stale reads.
@@ -22,7 +26,8 @@ A modern, high-performance reference application built with **Spring Boot**, **S
 
 * **Language**: Java 21
 * **Framework**: Spring Boot 4.1.0-SNAPSHOT (or latest parent starter)
-* **Database**: H2 Database (In-Memory)
+* **Object Mapper**: MapStruct 1.5.5.Final
+* **Database**: In-Memory H2 Database with JPA Auditing
 * **Cache Provider**: Redis
 * **Documentation**: Springdoc-OpenAPI v3
 * **Build Tool**: Maven
@@ -34,22 +39,32 @@ A modern, high-performance reference application built with **Spring Boot**, **S
 ```text
 src/main/java/com/redisdemo
 ├── config
-│   ├── DataInitializer.java     # Seeds H2 DB on startup if empty
-│   └── RedisConfig.java         # Tweaks serialization & TTLs (10 min duration)
+│   ├── DataInitializer.java        # Seeds H2 DB on startup if empty
+│   └── RedisConfig.java            # Tweaks serialization & TTLs (10 min duration)
 ├── controller
-│   └── BookController.java      # REST endpoints for CRUD actions
-├── dto
-│   ├── ApiResponse.java         # Master API wrapper
-│   └── PaginationMeta.java      # standard pagination properties metadata
+│   └── BookController.java         # REST endpoints for CRUD actions with @Valid validation
+├── dto                             # Record DTO Layer
+│   ├── ApiResponse.java            # Master API response wrapper
+│   ├── Auditable.java              # JPA Auditing base abstract class
+│   ├── BookRequest.java            # Book creation constraints record
+│   ├── BookResponse.java           # Book output information record
+│   ├── BookUpdateRequest.java      # Book modification constraints record
+│   └── PaginationMeta.java         # Standard pagination properties metadata
 ├── entity
-│   └── Books.java               # JPA Entity mapping utilizing UUIDs
+│   └── Books.java                  # JPA Entity mapping utilizing UUIDs, extends Auditable
+├── exception
+│   └── BookNotFoundException.java  # Custom domain exception throwing on resource miss
+├── mapper
+│   └── BookMapper.java             # MapStruct interface compiling to mapper implementations
 ├── repository
-│   └── BookRepository.java      # Database Repository extends JpaRepository
+│   └── BookRepository.java         # Database Repository extends JpaRepository
 ├── service
-│   └── BookService.java         # Houses commercial logic & caching annotations
+│   ├── BookService.java            # Service contract interface returning DTOs
+│   └── impl
+│       └── BookServiceImpl.java    # Service Implementation injecting MapStruct & repositories
 └── utils
-    ├── ApiResponseBuilder.java  # Response building utility helper
-    └── PaginationMapper.java    # Maps JPA Page metadata to standard API metadata
+    ├── ApiResponseBuilder.java     # Response building utility helper
+    └── PaginationMapper.java       # Maps Page metadata to standard API metadata
 ```
 
 ---
@@ -147,12 +162,13 @@ Inserts a new book into the database and evicts the list caching (`allEntries = 
 ```
 
 ### 4. Update a Book
-Updates the entity and evicts both single-book cache (`books::bookId`) and pagination caches (`page-books`).
+Updates the entity dynamically using DTO properties matching via MapStruct and evicts both single-book cache (`books::bookId`) and pagination caches (`page-books`).
 * **Route**: `PUT /api/books/{bookId}`
 * **Payload**:
 ```json
 {
-  "bookName": "Clean Code (Revised Edition)"
+  "bookName": "Clean Code (Revised Edition)",
+  "authorName": "Robert C. Martin"
 }
 ```
 
@@ -174,9 +190,5 @@ Removes the entity from DB and cascades cache eviction tags.
 Explore all API details visually using Swagger:
 * **Interactive Docs**: `http://localhost:8080/swagger-ui/index.html`
 * **OpenAPI Specs**: `http://localhost:8080/v3/api-docs`
-
-
-### Screenshot
-<img width="1899" height="1031" alt="image" src="https://github.com/user-attachments/assets/644c7441-83b9-475e-8224-92a47bc7f2d2" />
 
 ---
