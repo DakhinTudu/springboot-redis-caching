@@ -4,9 +4,9 @@ import com.redisdemo.dto.ApiResponse;
 import com.redisdemo.dto.BookRequest;
 import com.redisdemo.dto.BookResponse;
 import com.redisdemo.dto.BookUpdateRequest;
-import com.redisdemo.entity.Books;
 import com.redisdemo.service.BookService;
 import com.redisdemo.utils.ApiResponseBuilder;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +24,7 @@ public class BookController {
     private final ApiResponseBuilder apiResponseBuilder;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<BookResponse>> createBook(@RequestBody BookRequest book) {
+    public ResponseEntity<ApiResponse<BookResponse>> createBook(@RequestBody @Valid BookRequest book) {
         return apiResponseBuilder.success(bookService.create(book),"Book create successfully",HttpStatus.CREATED);
     }
 
@@ -44,7 +44,7 @@ public class BookController {
     @PutMapping("/{bookId}")
     public ResponseEntity<ApiResponse<BookResponse>> updateBook(
             @PathVariable UUID bookId,
-            @RequestBody BookUpdateRequest book) {
+            @RequestBody @Valid BookUpdateRequest book) {
         return apiResponseBuilder.success(bookService.update(bookId, book),"Book updated successfully",HttpStatus.OK);
     }
 
