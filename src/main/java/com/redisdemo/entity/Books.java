@@ -1,24 +1,28 @@
 package com.redisdemo.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.redisdemo.dto.Auditable;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.UUID;
 
 @Entity
-@Data
+@Table(name = "books")
+@Getter
+@Setter
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Books{
+public class Books extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "book_id")
     private UUID bookId;
+    @Column(name = "book_name",length = 50,nullable = false)
     private String bookName;
+    @Column(name = "author_name", length = 50, nullable = false)
     private String authorName;
+
 }
