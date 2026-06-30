@@ -44,4 +44,25 @@ public class ApiResponseBuilder {
                 .body(response);
     }
 
+
+    // error method overload
+
+    public <T> ResponseEntity<ApiResponse<T>> error(
+            T data,
+            String message,
+            HttpStatus status) {
+
+        ApiResponse<T> response =
+                ApiResponse.<T>builder()
+                        .success(false)
+                        .message(message)
+                        .data(data)
+                        .status(status.value())
+                        .timestamp(Instant.now())
+                        .build();
+
+        return ResponseEntity.status(status)
+                .body(response);
+    }
+
 }
