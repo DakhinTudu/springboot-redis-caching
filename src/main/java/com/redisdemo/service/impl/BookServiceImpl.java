@@ -5,6 +5,7 @@ import com.redisdemo.dto.BookRequest;
 import com.redisdemo.dto.BookResponse;
 import com.redisdemo.dto.BookUpdateRequest;
 import com.redisdemo.entity.Books;
+import com.redisdemo.exception.BookNotFoundException;
 import com.redisdemo.mapper.BookMapper;
 import com.redisdemo.repository.BookRepository;
 import com.redisdemo.service.BookService;
@@ -46,7 +47,7 @@ public class BookServiceImpl implements BookService {
     @Transactional
     public BookResponse update(UUID bookId, BookUpdateRequest book) {
         Books existingBook = repository.findById(bookId)
-                .orElseThrow(() -> new RuntimeException("Book Not Found"));
+                .orElseThrow(() -> new BookNotFoundException(bookId));
 
         if (hasText(book.bookName())) {
             existingBook.setBookName(book.bookName());
@@ -66,7 +67,7 @@ public class BookServiceImpl implements BookService {
     @Cacheable(value = "books", key = "#bookId")
     public BookResponse getBookById(UUID bookId) {
        Books book = repository.findById(bookId)
-                .orElseThrow(() -> new RuntimeException("Book Not Found"));
+                .orElseThrow(() -> new BookNotFoundException(bookId));
        return bookMapper.toResponse(book);
     }
 
@@ -89,7 +90,7 @@ public class BookServiceImpl implements BookService {
     public void delete(UUID bookId) {
 
         Books book = repository.findById(bookId)
-                .orElseThrow(() -> new RuntimeException("Book Not Found"));
+                .orElseThrow(() -> new BookNotFoundException(bookId));
         repository.delete(book);
     }
 }
