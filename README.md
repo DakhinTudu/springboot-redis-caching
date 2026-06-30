@@ -175,4 +175,8 @@ Explore all API details visually using Swagger:
 * **Interactive Docs**: `http://localhost:8080/swagger-ui/index.html`
 * **OpenAPI Specs**: `http://localhost:8080/v3/api-docs`
 
+
+### Screenshot
+<img width="1899" height="1031" alt="image" src="https://github.com/user-attachments/assets/644c7441-83b9-475e-8224-92a47bc7f2d2" />
+
 ---
